@@ -9,6 +9,7 @@ Composite GitHub Action that installs `@m100/cli` and builds packed `.DO` and to
 - `out-dir` (optional): Output directory. Default: `dist`.
 - `ascii-name` (optional): Packed `.DO` output name. Defaults to `basename(source)`.
 - `tokenized-name` (optional): Tokenized `.BA` output name. Defaults to `ascii-name` with `.DO` -> `.BA`.
+- `lint` (optional): Run `m100 lint` before building. Default: `true`.
 
 ## Outputs
 - `ascii-path`: Path to the packed `.DO` output.

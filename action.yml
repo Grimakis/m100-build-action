@@ -22,6 +22,10 @@ inputs:
   tokenized-name:
     description: Output name for .BA (optional; defaults to ascii-name with .DO -> .BA)
     required: false
+  lint:
+    description: Run m100 lint on source before building
+    required: false
+    default: "true"
 outputs:
   ascii-path:
     description: Path to packed .DO output
@@ -35,6 +39,10 @@ runs:
     - name: Install CLI
       shell: bash
       run: npm install -g "${{ inputs.cli-package }}"
+    - name: Lint source
+      if: ${{ inputs.lint == 'true' }}
+      shell: bash
+      run: m100 lint "${{ inputs.source }}"
     - name: Build artifacts
       id: build
       shell: bash
