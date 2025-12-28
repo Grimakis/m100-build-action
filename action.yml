@@ -70,7 +70,22 @@ runs:
         ascii_path="$ascii_dir/$ascii_name"
         token_path="$token_dir/$token_name"
 
-        m100 pack "$source" --out "$ascii_path"
+        work_dir="$(mktemp -d)"
+        trap 'rm -rf "$work_dir"' EXIT
+
+        squash_path="$work_dir/squash.DO"
+        renumber1_path="$work_dir/renumber1.DO"
+        pack_path="$work_dir/pack.DO"
+
+        m100 squash "$source" --out "$squash_path"
+        m100 renumber "$squash_path" --start 1 --increment 1 --out "$renumber1_path"
+        m100 pack "$renumber1_path" --out "$pack_path"
+        m100 renumber "$pack_path" --start 1 --increment 1 --out "$ascii_path"
+
+        if [ "${{ inputs.lint }}" = "true" ]; then
+          m100 lint "$ascii_path"
+        fi
+
         m100 tokenize "$ascii_path" --out "$token_path" --base "${{ inputs.base }}"
 
         echo "ascii-path=$ascii_path" >> "$GITHUB_OUTPUT"
