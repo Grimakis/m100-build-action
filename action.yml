@@ -1,0 +1,69 @@
+name: m100-build
+description: Build Model 100 artifacts using the npm CLI
+inputs:
+  cli-package:
+    description: NPM package name for the CLI
+    required: false
+    default: "@m100/cli"
+  source:
+    description: Path to .DO source
+    required: true
+  base:
+    description: Base address (hex, no 0x)
+    required: false
+    default: "8001"
+  out-dir:
+    description: Output directory
+    required: false
+    default: "dist"
+  ascii-name:
+    description: Output name for packed .DO (optional; defaults to source basename)
+    required: false
+  tokenized-name:
+    description: Output name for .BA (optional; defaults to ascii-name with .DO -> .BA)
+    required: false
+outputs:
+  ascii-path:
+    description: Path to packed .DO output
+    value: ${{ steps.build.outputs.ascii-path }}
+  tokenized-path:
+    description: Path to tokenized .BA output
+    value: ${{ steps.build.outputs.tokenized-path }}
+runs:
+  using: composite
+  steps:
+    - name: Install CLI
+      shell: bash
+      run: npm install -g "${{ inputs.cli-package }}"
+    - name: Build artifacts
+      id: build
+      shell: bash
+      run: |
+        set -euo pipefail
+        source="${{ inputs.source }}"
+        ascii_name="${{ inputs.ascii-name }}"
+        token_name="${{ inputs.tokenized-name }}"
+
+        if [ -z "$ascii_name" ]; then
+          ascii_name="$(basename "$source")"
+        fi
+
+        if [ -z "$token_name" ]; then
+          token_name="$(echo "$ascii_name" | sed -E 's/\.[dD][oO]$/.BA/')"
+          if [ "$token_name" = "$ascii_name" ]; then
+            token_name="${ascii_name}.BA"
+          fi
+        fi
+
+        ascii_dir="${{ inputs.out-dir }}/ascii_packed"
+        token_dir="${{ inputs.out-dir }}/tokenized_packed"
+        mkdir -p "$ascii_dir" "$token_dir"
+
+        ascii_path="$ascii_dir/$ascii_name"
+        token_path="$token_dir/$token_name"
+
+        m100 pack "$source" --out "$ascii_path"
+        m100 tokenize "$ascii_path" --out "$token_path" --base "${{ inputs.base }}"
+
+        echo "ascii-path=$ascii_path" >> "$GITHUB_OUTPUT"
+        echo "tokenized-path=$token_path" >> "$GITHUB_OUTPUT"
